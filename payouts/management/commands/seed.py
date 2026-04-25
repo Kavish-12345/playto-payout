@@ -1,12 +1,16 @@
 from django.core.management.base import BaseCommand
-from payouts.models import Merchant, BankAccount, LedgerEntry
+from payouts.models import Merchant, BankAccount, LedgerEntry, Payout, IdempotencyKey
 
 
 class Command(BaseCommand):
     help = 'Seed database with test merchants'
 
     def handle(self, *args, **kwargs):
+        # Delete in correct order - children before parents
+        IdempotencyKey.objects.all().delete()
         LedgerEntry.objects.all().delete()
+        Payout.objects.all().delete()
+        BankAccount.objects.all().delete()
         Merchant.objects.all().delete()
 
         # Merchant 1
