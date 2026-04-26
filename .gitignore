@@ -1,8 +1,6 @@
-venv/
-__pycache__/
+backend/venv/
+backend/__pycache__/
+backend/.env
+frontend/node_modules/
 *.pyc
-.env
-*.sqlite3
-node_modules/
 .DS_Store
-*.log

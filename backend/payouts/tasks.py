@@ -1,12 +1,10 @@
 import random
-from celery import shared_task
 from django.db import transaction
 from django.utils import timezone
 from datetime import timedelta
 
 
-@shared_task(bind=True, max_retries=3)
-def process_payout(self, payout_id):
+def process_payout(payout_id):
     from .models import Payout, LedgerEntry
 
     try:
@@ -14,12 +12,14 @@ def process_payout(self, payout_id):
     except Payout.DoesNotExist:
         return
 
-    # Only process PENDING payouts
-    if payout.status != Payout.PENDING:
+    # Handle both PENDING and PROCESSING (retries)
+    if payout.status not in [Payout.PENDING, Payout.PROCESSING]:
         return
 
-    # Move to PROCESSING
-    payout.transition_to(Payout.PROCESSING)
+    # If PENDING move to PROCESSING
+    if payout.status == Payout.PENDING:
+        payout.transition_to(Payout.PROCESSING)
+
     payout.attempts += 1
     payout.save()
 
@@ -42,36 +42,35 @@ def process_payout(self, payout_id):
                 payout=payout
             )
     else:
-        # 10% hang - do nothing, retry handles it
+        # 10% hang - do nothing
+        # retry_stuck_payouts will pick it up again
         pass
 
 
-@shared_task
 def retry_stuck_payouts():
-    from .models import Payout
+    from .models import Payout, LedgerEntry
+    from django_q.tasks import async_task
 
     cutoff = timezone.now() - timedelta(seconds=30)
 
+    # Retry stuck payouts under max attempts
     stuck = Payout.objects.filter(
         status=Payout.PROCESSING,
         updated_at__lt=cutoff,
         attempts__lt=3
     )
-
     for payout in stuck:
-        process_payout.delay(payout.id)
+        async_task('payouts.tasks.process_payout', payout.id)
 
-    # Force fail payouts that exceeded max attempts
-    failed = Payout.objects.filter(
+    # Force fail payouts over max attempts
+    over_limit = Payout.objects.filter(
         status=Payout.PROCESSING,
         updated_at__lt=cutoff,
         attempts__gte=3
     )
-
-    for payout in failed:
+    for payout in over_limit:
         with transaction.atomic():
             payout.transition_to(Payout.FAILED)
-            from .models import LedgerEntry
             LedgerEntry.objects.create(
                 merchant=payout.merchant,
                 amount_paise=+payout.amount_paise,

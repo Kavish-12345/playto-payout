@@ -18,6 +18,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'payouts',
+    'django_q',
 ]
 
 MIDDLEWARE = [
@@ -49,10 +50,24 @@ DATABASES = {
     }
 }
 
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
-CELERY_RESULT_BACKEND = os.getenv('CELERY_BROKER_URL')
+
+
+Q_CLUSTER = {
+    'name': 'playto',
+    'workers': 2,
+    'timeout': 90,
+    'retry': 120,
+    'orm': 'default',
+}
+
+
 
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_HEADERS = [
+    'content-type',
+    'idempotency-key',
+    'authorization',
+]
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 USE_TZ = True
 TIME_ZONE = 'UTC'

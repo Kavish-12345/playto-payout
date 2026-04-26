@@ -154,8 +154,8 @@ class PayoutListCreateView(APIView):
 
             # Queue the payout for processing
             # Import here to avoid circular imports
-            from .tasks import process_payout
-            process_payout.delay(payout.id)
+            from django_q.tasks import async_task
+            async_task('payouts.tasks.process_payout', payout.id)
 
             return Response(response_data, status=status.HTTP_201_CREATED)
 
