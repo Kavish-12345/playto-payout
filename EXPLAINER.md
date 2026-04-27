@@ -99,8 +99,7 @@ Keys are scoped per merchant via a `unique_together = [('merchant', 'key')]` con
 
 **What happens if the first request is in-flight when the second arrives:**
 
-**What this implementation does:**
-
+What this implementation does:
 The idempotency key is written inside the `transaction.atomic()` block and becomes visible only after the transaction commits.
 If two requests with the same key arrive concurrently, the second request may not see the key and will attempt to proceed. It will then hit the `(merchant, key)` unique constraint, raising an `IntegrityError` and resulting in a 500 response. This approach still guarantees correctness — no duplicate payouts are created — because the database enforces uniqueness.
 However, returning a 500 for a valid retry is not ideal for a production system, as the client cannot distinguish between a failure and an in-progress request. A more robust design would pre-insert the idempotency key with a `PENDING` state before executing business logic. This would serialize concurrent requests at the key lookup stage and allow deterministic responses for retries.
