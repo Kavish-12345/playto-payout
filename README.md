@@ -6,7 +6,7 @@ A concurrency-safe payout engine with:
 - Ledger-based accounting
 - Async processing
 
-## 📘 Deep Dive
+## 📘 Deep Dive (Explainer.md)
 👉 [Full Explanation](./EXPLAINER.md)
 
 ## 🌐 Live Demo
