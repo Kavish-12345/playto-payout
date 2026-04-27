@@ -3,7 +3,44 @@ import axios from 'axios'
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1'
 
-function App() {
+function HomePage({ onEnter }) {
+  return (
+    <div className="min-h-screen bg-black text-white flex flex-col">
+  
+
+      {/* Hero */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6 text-center">
+        <div className="mb-6">
+      
+          <h1 className="text-6xl md:text-8xl font-light tracking-tight leading-none mb-4">
+            Playto
+            <br />
+            <span className="text-gray-600">Pay</span>
+          </h1>
+
+          <p className="text-gray-500 text-sm uppercase tracking-wider mt-6 mb-2">
+            Merchant Payout Engine
+          </p>
+          <p className="text-gray-600 text-sm max-w-sm mx-auto leading-relaxed">
+            Manage payouts, track balances, and monitor transactions across all your merchants in real time.
+          </p>
+        </div>
+
+        <button
+          onClick={onEnter}
+          className="group border border-white bg-white text-black px-10 py-4 text-sm uppercase tracking-widest font-medium hover:bg-black hover:text-white transition-all duration-300 flex items-center gap-3"
+        >
+          Enter Dashboard
+          <span className="group-hover:translate-x-1 transition-transform duration-300">→</span>
+        </button>
+      </div>
+
+
+    </div>
+  )
+}
+
+function Dashboard({ onBack }) {
   const [merchants, setMerchants] = useState([])
   const [selectedMerchant, setSelectedMerchant] = useState(null)
   const [balance, setBalance] = useState(null)
@@ -12,7 +49,6 @@ function App() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
-  // Load merchants on start
   useEffect(() => {
     axios.get(`${API}/merchants/`).then(res => {
       setMerchants(res.data)
@@ -22,14 +58,12 @@ function App() {
     })
   }, [])
 
-  // Load balance and payouts when merchant changes
   useEffect(() => {
     if (!selectedMerchant) return
     fetchBalance()
     fetchPayouts()
   }, [selectedMerchant])
 
-  // Poll for live updates every 5 seconds
   useEffect(() => {
     if (!selectedMerchant) return
     const interval = setInterval(() => {
@@ -100,18 +134,27 @@ function App() {
   }
 
   return (
-   <div className="min-h-screen bg-black text-white p-6">
+    <div className="min-h-screen bg-black text-white p-6">
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
-        <div className="mb-6">
-       <h1 className="text-5xl font-light tracking-tight">Playto Pay</h1>
-<p className="text-gray-500 text-sm mt-2 uppercase tracking-wider">Merchant Payout Engine</p>
+        <div className="mb-6 flex items-start justify-between">
+          <div>
+            <h1 className="text-5xl font-light tracking-tight">Playto Pay</h1>
+            <p className="text-gray-500 text-sm mt-2 uppercase tracking-wider">Merchant Payout Engine</p>
+          </div>
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 border border-gray-800 px-4 py-2 text-xs uppercase tracking-wider text-gray-400 hover:border-gray-600 hover:text-white transition-all duration-200 mt-1"
+          >
+            <span>←</span>
+            Back
+          </button>
         </div>
 
         {/* Merchant Selector */}
-      <div className="border border-gray-800 bg-neutral-950 p-4 mb-4">
-  <label className="text-xs uppercase tracking-wider text-gray-500">Select Merchant</label>
+        <div className="border border-gray-800 bg-neutral-950 p-4 mb-4">
+          <label className="text-xs uppercase tracking-wider text-gray-500">Select Merchant</label>
           <select
             className="mt-1 block w-full bg-black border border-gray-800 px-3 py-2 text-sm text-white focus:outline-none focus:border-white"
             onChange={e => {
@@ -130,14 +173,14 @@ function App() {
         {balance && (
           <div className="grid grid-cols-2 gap-4 mb-4">
             <div className="border border-gray-800 bg-neutral-950 p-4">
-             <p className="text-xs uppercase tracking-wider text-gray-500">Available Balance</p>
-<p className="text-2xl font-light text-white">
+              <p className="text-xs uppercase tracking-wider text-gray-500">Available Balance</p>
+              <p className="text-2xl font-light text-white">
                 {formatPaise(balance.available_balance_paise)}
               </p>
             </div>
-     <div className="border border-gray-800 bg-neutral-950 p-4">
-  <p className="text-xs uppercase tracking-wider text-gray-500">Held Balance</p>
-<p className="text-2xl font-light text-yellow-400">
+            <div className="border border-gray-800 bg-neutral-950 p-4">
+              <p className="text-xs uppercase tracking-wider text-gray-500">Held Balance</p>
+              <p className="text-2xl font-light text-yellow-400">
                 {formatPaise(balance.held_balance_paise)}
               </p>
             </div>
@@ -145,15 +188,15 @@ function App() {
         )}
 
         {/* Payout Form */}
-      <div className="border border-gray-800 bg-neutral-950 p-4 mb-4">
-  <h2 className="text-xs uppercase tracking-wider text-gray-500 mb-3 font-medium">Request Payout</h2>
+        <div className="border border-gray-800 bg-neutral-950 p-4 mb-4">
+          <h2 className="text-xs uppercase tracking-wider text-gray-500 mb-3 font-medium">Request Payout</h2>
           <div className="flex gap-2">
             <input
               type="number"
               placeholder="Amount in ₹"
               value={amount}
               onChange={e => setAmount(e.target.value)}
-            className="flex-1 bg-black border border-gray-800 px-4 py-3 text-sm text-white focus:outline-none focus:border-white transition-colors"
+              className="flex-1 bg-black border border-gray-800 px-4 py-3 text-sm text-white focus:outline-none focus:border-white transition-colors"
             />
             <button
               onClick={requestPayout}
@@ -172,12 +215,12 @@ function App() {
 
         {/* Recent Transactions */}
         {balance?.recent_transactions?.length > 0 && (
-        <div className="border border-gray-800 bg-neutral-950 p-4 mb-4">
-  <h2 className="text-xs uppercase tracking-wider text-gray-500 mb-3 font-medium">Recent Transactions</h2>
+          <div className="border border-gray-800 bg-neutral-950 p-4 mb-4">
+            <h2 className="text-xs uppercase tracking-wider text-gray-500 mb-3 font-medium">Recent Transactions</h2>
             <div className="space-y-2">
               {balance.recent_transactions.map(t => (
                 <div key={t.id} className="flex justify-between items-center text-sm">
-               <span className="text-gray-400">{t.description}</span>
+                  <span className="text-gray-400">{t.description}</span>
                   <span className={t.amount_paise > 0 ? 'text-green-600' : 'text-red-600'}>
                     {t.amount_paise > 0 ? '+' : ''}{formatPaise(t.amount_paise)}
                   </span>
@@ -228,6 +271,16 @@ function App() {
       </div>
     </div>
   )
+}
+
+function App() {
+  const [page, setPage] = useState('home')
+
+  if (page === 'dashboard') {
+    return <Dashboard onBack={() => setPage('home')} />
+  }
+
+  return <HomePage onEnter={() => setPage('dashboard')} />
 }
 
 export default App
